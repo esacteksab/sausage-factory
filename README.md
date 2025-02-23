@@ -33,6 +33,7 @@ I need a pig pen (wow, not sure how I got on this pork theme) so to speak. A pla
 - My first GitHub CLI extension written in Go
 - My first Hugo Theme. Created with `hugo new theme`. I haven't done professional web development since 2006. I definitely have not kept up to date on things. Theme is built to be light-weight. Also dipping my toes in the water with TailwindCSS.
 - Terraform Modules. I have _opinions_.
+- I've been doing _terrible shit_ to my `~/.zshrc` though that feels more like a blog post.
 
 ## What This Isn't
 
