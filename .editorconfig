@@ -1,0 +1,52 @@
+# top-most EditorConfig file
+root = true
+
+# defaults
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+indent_style = space
+indent_size = 2
+
+# CSS
+# https://google.github.io/styleguide/htmlcssguide.xml#General_Formatting_Rules
+# http://cssguidelin.es/#syntax-and-formatting
+[*.css]
+indent_size = 2
+
+# TOML
+# https://github.com/toml-lang/toml/tree/master/examples
+[*.toml]
+indent_size = 2
+
+[package.json]
+indent_size = 2
+
+
+[*.md]
+trim_trailing_whitespace = false
+
+
+# Override for Makefile
+[{Makefile, makefile, GNUmakefile}]
+indent_style = tab
+indent_size = 4
+
+[Makefile.*]
+indent_style = tab
+indent_size = 4
+
+[*.yaml]
+indent_style = space
+indent_size = 2
+
+[*.sh]
+indent_style = tab
+indent_size = 2
+
+[*.{tf,tfvars,tpl}]
+indent_size = 2
+indent_style = space
