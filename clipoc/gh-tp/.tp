@@ -1,0 +1,17 @@
+---
+binary: terraform
+planfile: "plan.out"
+mdfile: "plan.md"
+#no-color: true
+
+## Proposed Layout Eventually
+# repo / root
+gh-tf-pr:
+  # out files
+  outfile:
+    # file created by gh tf-pr create plan
+    # file created by $binary plan -out outfile.plan
+    plan: "plan.out"
+    # file created by gh tf-pr create markdown
+    md: "plan.md" 
+  no-color: true
