@@ -14,7 +14,7 @@
 
 ### Looking at (in no particular order)
 
-- [gh-extenions-precompile](https://github.com/cli/gh-extension-precompile) GitHub action from the `cli/cli` team themselves.
+- [gh-extensions-precompile](https://github.com/cli/gh-extension-precompile) GitHub action from the `cli/cli` team themselves.
   - This is referenced in their Creating GitHub CLI extensions [Tips for writing precompiled GitHub CLI extensions](https://docs.github.com/en/github-cli/github-cli/creating-github-cli-extensions#tips-for-writing-precompiled-github-cli-extensions).
 - Hugo's [hugoreleaser](https://github.com/gohugoio/hugoreleaser).
   - Their reason for [Why another Go release tool](https://github.com/gohugoio/hugoreleaser?tab=readme-ov-file#why-another-go-release-tool) is compelling.
