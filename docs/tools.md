@@ -9,6 +9,7 @@
     - [Release Tools](#release-tools)
     - [Changelog](#changelog)
     - [Inspiration](#inspiration)
+  - [Spelling](./tools/spelling.md)
 
 <!-- mdformat-toc end -->
 
@@ -46,6 +47,7 @@ More specifically (in no particular order)
 - [joselitofilho/go-conventional-commits](https://github.com/joselitofilho/go-conventional-commits).
 - [Conventional Commits Linter](https://gitlab.com/DeveloperC/conventional_commits_linter) looks to be written in Rust. Actively maintained but with a ["Pre 1.0.0 breaking changes _may_ be introduced without increasing the major version"](https://gitlab.com/DeveloperC/conventional_commits_linter#pre-100-breaking-changes-may-be-introduced-without-increasing-the-major-version) warning gives me pause in the short-term.
 - From the same folks as the previously mentioned tool, a tool called [Conventional Commits Next Version](https://gitlab.com/DeveloperC/conventional_commits_next_version) which uses Convetional Commits to calculate the semantic version for a release.
+- [crate-ci/committed](https://github.com/crate-ci/committed)
 
 #### Release Tools
 
