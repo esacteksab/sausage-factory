@@ -19,6 +19,6 @@ ifneq (,$(wildcard ./terraform.tfstate))
 	rm terraform.tfstate
 endif
 
-ifneq (,$(wildcard ./bsTF))
+ifneq (,$(wildcard ./bs))
 	rm -r bsTF
 endif
