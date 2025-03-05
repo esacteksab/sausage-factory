@@ -5,3 +5,4 @@ binary = "terraform"
 planFile = "plan.out"
 mdFile = "plan.md"
 # noColor = true
+#verbose = true
