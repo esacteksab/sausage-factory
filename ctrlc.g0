@@ -1,0 +1,74 @@
+package main
+
+// Play with this
+// Google's AI repsonse to query: 'handling ctrl+ with cobra golang'
+
+// To handle Ctrl+C events gracefully in a Cobra-based Go application, one can
+// utilize Go's os/signal package. This involves setting up a channel to listen
+// for interrupt signals and then defining the actions to take upon receiving
+// such a signal. Here's how it can be implemented:
+
+// Additional context:
+// In this example, a context.Context is used to manage the application's
+// lifecycle. A goroutine listens for interrupt signals (Ctrl+C). When a signal
+// is received, it cancels the context, signaling other goroutines to stop. The
+// main loop checks for the context cancellation and exits gracefully,
+// performing cleanup if necessary.
+
+// Possibly useful
+// https://www.dolthub.com/blog/2022-11-28-go-os-exec-patterns/
+// https://pace.dev/blog/2020/02/17/repond-to-ctrl-c-interrupt-signals-gracefully-with-context-in-golang-by-mat-ryer.html
+//
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/spf13/cobra"
+)
+
+var rootCmd = &cobra.Command{
+	Use:   "mycli",
+	Short: "A sample CLI application",
+	Run:   runCommand,
+}
+
+func runCommand(cmd *cobra.Command, args []string) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Setting up signal handling for Ctrl+C
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigChan
+		fmt.Println("\nReceived signal:", sig)
+		cancel() // Cancel the context to signal goroutines to stop
+	}()
+
+	fmt.Println("Application started. Press Ctrl+C to exit.")
+
+	// Simulate some work being done
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("Exiting gracefully...")
+			// Perform cleanup operations here
+			return
+		default:
+			fmt.Println("Working...")
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
+
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
