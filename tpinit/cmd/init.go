@@ -1,17 +1,24 @@
 package cmd
 
 import (
+	"errors"
+	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
 )
 
 var (
+	accessible  string
 	binary      string
 	cfgFile     string
 	configDir   string
+	createFile  bool
 	cwd         string
 	homeDir     string
 	mdFile      string
@@ -24,32 +31,37 @@ type Project struct {
 }
 
 type configParams struct {
-	Binary   string `toml:"binary" comment:"(type: string) 'tofu' or 'terraform'. Must exist on your $PATH."`
-	MdFile   string `toml:"mdFile" comment:"(type: string)The name of the Markdown file created by 'gh tp'."`
-	PlanFile string `toml:"planFile" comment:"(type: string) The name of the plan file created by 'gh tp'."`
-	Verbose  bool   `toml:"verbose" comment:"(type: bool) Enable Verbose Logging. Default is false."`
+	Binary   string `toml:"binary" comment:"binary: (type: string) The name of the binary, typically either 'tofu' or 'terraform'. Must exist on your $PATH."`
+	PlanFile string `toml:"planFile" comment:"planFile: (type: string) The name of the plan file created by 'gh tp'."`
+	MdFile   string `toml:"mdFile" comment:"mdFile: (type: string) The name of the Markdown file created by 'gh tp'."`
+	Verbose  bool   `toml:"verbose" comment:"verbose: (type: bool) Enable Verbose Logging. Default is false."`
 }
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Simple terminal-based form to generate a config file for tp",
+	Long: `A CLI prompt-based form with some suggested values to generate a config file for tp
+'gh tp init' with no flags or arguments will instantiate the prompt-based form. File will be created
+in the location selected. Order of lookups is:
+    '$HOME/.config/.tp.toml'
+	'$HOME/.tp.toml'
+	'.tp.toml' (Project's Root).`,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		homeDir, configDir = getDirectories()
 		repo := getRepo()
 		dir, cwderr := getCWD()
-		scwd := strings.Split(dir, "/")
-		cwd = scwd[len(scwd)-1]
 		if cwderr != nil {
 			log.Fatalf("Error: %s", cwderr)
 		}
+
+		// dir could be something like /home/user/projects/project
+		scwd := strings.Split(dir, "/")
+		// we just want the last part of 'dir' which is CWD or `pwd` on *nix
+		cwd = scwd[len(scwd)-1]
+
+		// Should we run in accessible mode?
+		accessible, _ := strconv.ParseBool(os.Getenv("ACCESSIBLE"))
 
 		form := huh.NewForm(
 			huh.NewGroup(
@@ -59,52 +71,98 @@ to quickly create a Cobra application.`,
 					Options(
 						huh.NewOption("Repository: "+repo, repo).Selected(true),
 						huh.NewOption("Project Root: "+cwd, cwd),
-					).
-					Value(&projectName),
-
+					).Value(&projectName),
+				// .Selected(true) is a pseudo 'default' here. We're choosing $HOME_CONFIG here
 				huh.NewSelect[string]().
 					Title("Where would you like to save your .tp.toml config file?").
 					Options(
-						huh.NewOption("Home Config Directory: "+configDir+"/.tp.toml", configDir).Selected(true),
+						huh.NewOption("Home Config Directory: "+configDir+"/.tp.toml",
+							configDir).Selected(true),
 						huh.NewOption("Home Directory: "+homeDir+"/.tp.toml", homeDir),
 						huh.NewOption("Project Root: "+cwd+"/.tp.toml", cwd),
-					).
-					Value(&cfgFile),
+					).Value(&cfgFile),
 
+				// It could make sense some day to do a `gh tp init --binary`
 				huh.NewSelect[string]().
 					Title("Choose your binary").
 					Options(
-						huh.NewOption("OpenTofu", "tofu").Selected(true),
-						huh.NewOption("Terraform", "terraform"),
-					).
-					Value(&binary),
+						huh.NewOption("OpenTofu", "tofu"),
+						huh.NewOption("Terraform", "terraform").Selected(true),
+					).Value(&binary),
 
 				huh.NewInput().
-					Title("What do you want to name your plan's output file? ").
-					PlaceholderFunc(func() string {
-						switch planFile {
-						case "":
-							return ""
-						default:
-							return "plan.out"
+					Title("What do you want the name of your plan's output file to be? ").
+					Placeholder("example: tpplan.out tp.out tp.plan plan.out out.plan ...").
+					Suggestions([]string{"tpplan.out", "tp.out", "tp.plan", "plan.out", "out.plan"}).
+					Value(&planFile).
+					Validate(func(pf string) error {
+						if pf == "" {
+							return errors.New("This field is requiured. Please enter what your plan's output file should be named.")
 						}
-					}, &planFile).
-					Inline(true).
-					Value(&planFile),
+						return nil
+					}),
 
 				huh.NewInput().
-					Title("What do you want to name your Markdown file?  ").
-					Placeholder("plan.md").
-					Value(&mdFile),
+					Title("What do you want the name of your Markdown file to be?  ").
+					Suggestions([]string{"tpplan.md", "tp.md", "plan.md"}).
+					Placeholder("example: tpplan.md tp.md plan.md ...").
+					Value(&mdFile).
+					Validate(func(md string) error {
+						if md == "" {
+							return errors.New("This field is requiured. Please enter what your Markdown file should be named.")
+						}
+						return nil
+					}),
+
+				huh.NewConfirm().
+					Title("Create file[Y], or write to stdout[N]?").
+					Value(&createFile),
 			),
-		).WithTheme(huh.ThemeBase())
+		).WithTheme(huh.ThemeBase16()).
+			// Just in case https://raw.githubusercontent.com/charmbracelet/huh/refs/tags/v0.6.0/keymap.go
+			// https://github.com/charmbracelet/huh/issues/73
+			WithKeyMap(&huh.KeyMap{
+				Quit: key.NewBinding(key.WithKeys("q", "esc"), key.WithHelp("q", "quit")),
+				Input: huh.InputKeyMap{
+					AcceptSuggestion: key.NewBinding(key.WithKeys("tab", "enter"), key.WithHelp("tab", "accept")),
+					Prev:             key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+tab", "back")),
+					Next:             key.NewBinding(key.WithKeys("enter", "tab"), key.WithHelp("enter", "next")),
+					Submit:           key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "submit")),
+				},
+				Select: huh.SelectKeyMap{
+					Prev:         key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+tab", "back")),
+					Next:         key.NewBinding(key.WithKeys("enter", "tab"), key.WithHelp("enter", "select")),
+					Submit:       key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "submit")),
+					Up:           key.NewBinding(key.WithKeys("up", "k", "ctrl+k", "ctrl+p"), key.WithHelp("↑", "up")),
+					Down:         key.NewBinding(key.WithKeys("down", "j", "ctrl+j", "ctrl+n"), key.WithHelp("↓", "down")),
+					Left:         key.NewBinding(key.WithKeys("h", "left"), key.WithHelp("←", "left"), key.WithDisabled()),
+					Right:        key.NewBinding(key.WithKeys("l", "right"), key.WithHelp("→", "right"), key.WithDisabled()),
+					Filter:       key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "filter")),
+					SetFilter:    key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "set filter"), key.WithDisabled()),
+					ClearFilter:  key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "clear filter"), key.WithDisabled()),
+					HalfPageUp:   key.NewBinding(key.WithKeys("ctrl+u"), key.WithHelp("ctrl+u", "½ page up")),
+					HalfPageDown: key.NewBinding(key.WithKeys("ctrl+d"), key.WithHelp("ctrl+d", "½ page down")),
+					GotoTop:      key.NewBinding(key.WithKeys("home", "g"), key.WithHelp("g/home", "go to start")),
+					GotoBottom:   key.NewBinding(key.WithKeys("end", "G"), key.WithHelp("G/end", "go to end")),
+				},
+				Confirm: huh.ConfirmKeyMap{
+					Prev:   key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+tab", "back")),
+					Next:   key.NewBinding(key.WithKeys("enter", "tab"), key.WithHelp("enter", "next")),
+					Submit: key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "submit")),
+					Toggle: key.NewBinding(key.WithKeys("h", "l", "right", "left"), key.WithHelp("←/→", "toggle")),
+					Accept: key.NewBinding(key.WithKeys("y", "Y"), key.WithHelp("y", "Yes")),
+					Reject: key.NewBinding(key.WithKeys("n", "N"), key.WithHelp("n", "No")),
+				},
+			}).WithShowHelp(true).WithShowErrors(true).WithAccessible(accessible)
 
 		runerr := form.Run()
 		if runerr != nil {
-			log.Fatal(runerr)
+			log.Warn(runerr)
+			os.Exit(1)
 		}
 
-		conf := make(map[string]interface{})
+		// conf := make(map[string]interface{})
+		conf := make(map[string]any)
 
 		conf[projectName] = configParams{
 			Binary:   binary,
@@ -113,16 +171,26 @@ to quickly create a Cobra application.`,
 			Verbose:  false,
 		}
 
-		genConfig(conf)
-		//log.Infof("Project name is: %s", projectName)
-		//log.Infof("Binary is: %s", binary)
-		//log.Infof("Plan out file is: %s", planFile)
-		//log.Infof("Markdown file is: %s", mdFile)
-		//log.Infof("File saved in: %s", cfgFile)
+		config, err := genConfig(conf)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// log.Infof("Project name is: %s", projectName)
+		// log.Infof("Binary is: %s", binary)
+		// log.Infof("Plan out file is: %s", planFile)
+		// log.Infof("Markdown file is: %s", mdFile)
+		// log.Infof("File saved in: %s", cfgFile)
+		if createFile {
+			err = os.WriteFile(cfgFile+"/.tp-test.toml", config, 0o644)
+			if err != nil {
+				log.Fatalf("Error writing Config file: %s", err)
+			}
+		} else {
+			fmt.Println(string(config))
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-
 }

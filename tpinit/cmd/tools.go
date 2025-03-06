@@ -33,20 +33,10 @@ func getCWD() (cwd string, err error) {
 	return cwd, cwderr
 }
 
-func genConfig(conf map[string]interface{}) {
-
-	data, err := toml.Marshal(conf)
+func genConfig(conf map[string]any) (data []byte, err error) {
+	data, err = toml.Marshal(conf)
 	if err != nil {
 		log.Fatalf("Failed marshalling TOML: %s", err)
 	}
-
-	err = os.WriteFile(".tp-test.toml", data, 0644)
-	if err != nil {
-		log.Fatalf("Error writing Config file: %s", err)
-	}
-
-	// fmt.Printf("Binary is: %s", cp.binary)
-	// fmt.Printf("Plan File is: %s", cp.planFile)
-	// fmt.Printf("Markdown File is: %s", cp.mdFile)
-	// fmt.Printf("Project Name is: %s", cp.projectName)
+	return data, err
 }

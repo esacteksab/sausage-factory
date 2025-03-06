@@ -1,9 +1,0 @@
-['esacteksab/sausage-factory']
-# (type: string) 'tofu' or 'terraform'. Must exist on your $PATH.
-binary = 'tofu'
-# (type: string)The name of the Markdown file created by 'gh tp'.
-mdFile = 'foo.bar.md'
-# (type: string) The name of the plan file created by 'gh tp'.
-planFile = ''
-# (type: bool) Enable Verbose Logging. Default is false.
-verbose = false
