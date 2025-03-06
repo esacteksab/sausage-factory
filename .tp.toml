@@ -1,8 +1,0 @@
-# .tp.toml
-
-binary = "terraform"
-#binary = "tofu"
-planFile = "plan.out"
-mdFile = "plan.md"
-# noColor = true
-#verbose = true
