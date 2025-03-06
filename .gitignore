@@ -1,10 +1,10 @@
 # GH Extension Things
-/gh-tf-pr
-/gh-tf-pr.exe
-/gh-tp-init
-/gh-tp-init.exe
-/main
-/main.exe
+gh-tf-pr
+gh-tf-pr.exe
+gh-tp-init
+gh-tp-init.exe
+main
+main.exe
 
 # Go Things
 # If you prefer the allow list template instead of the deny list, see community template:
