@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/huh"
@@ -14,24 +13,19 @@ import (
 )
 
 var (
-	accessible  string
-	binary      string
-	cfgFile     string
-	configDir   string
-	createFile  bool
-	cwd         string
-	homeDir     string
-	mdFile      string
-	planFile    string
-	projectName string
+	accessible bool
+	binary     string
+	cfgFile    string
+	configDir  string
+	createFile bool
+	cwd        string
+	homeDir    string
+	mdFile     string
+	planFile   string
 )
 
-type Project struct {
-	Project map[string]configParams
-}
-
-type configParams struct {
-	Binary   string `toml:"binary" comment:"binary: (type: string) The name of the binary, typically either 'tofu' or 'terraform'. Must exist on your $PATH."`
+type ConfigParams struct {
+	Binary   string `toml:"binary" comment:"binary: (type: string) The name of the binary, either 'tofu' or 'terraform'. Must exist on your $PATH."`
 	PlanFile string `toml:"planFile" comment:"planFile: (type: string) The name of the plan file created by 'gh tp'."`
 	MdFile   string `toml:"mdFile" comment:"mdFile: (type: string) The name of the Markdown file created by 'gh tp'."`
 	Verbose  bool   `toml:"verbose" comment:"verbose: (type: bool) Enable Verbose Logging. Default is false."`
@@ -48,38 +42,24 @@ in the location selected. Order of lookups is:
 	'$HOME/.tp.toml'
 	'.tp.toml' (Project's Root).`,
 	Run: func(cmd *cobra.Command, args []string) {
-		homeDir, configDir = getDirectories()
-		repo := getRepo()
-		dir, cwderr := getCWD()
-		if cwderr != nil {
-			log.Fatalf("Error: %s", cwderr)
+		homeDir, configDir, cwd, err := getDirectories()
+		if err != nil {
+			log.Fatalf("Error: %s", err)
 		}
 
-		// dir could be something like /home/user/projects/project
-		scwd := strings.Split(dir, "/")
-		// we just want the last part of 'dir' which is CWD or `pwd` on *nix
-		cwd = scwd[len(scwd)-1]
-
 		// Should we run in accessible mode?
-		accessible, _ := strconv.ParseBool(os.Getenv("ACCESSIBLE"))
+		accessible, _ = strconv.ParseBool(os.Getenv("ACCESSIBLE"))
 
 		form := huh.NewForm(
 			huh.NewGroup(
 
-				huh.NewSelect[string]().
-					Title("What is the name of your project?").
-					Options(
-						huh.NewOption("Repository: "+repo, repo).Selected(true),
-						huh.NewOption("Project Root: "+cwd, cwd),
-					).Value(&projectName),
-				// .Selected(true) is a pseudo 'default' here. We're choosing $HOME_CONFIG here
 				huh.NewSelect[string]().
 					Title("Where would you like to save your .tp.toml config file?").
 					Options(
 						huh.NewOption("Home Config Directory: "+configDir+"/.tp.toml",
 							configDir).Selected(true),
 						huh.NewOption("Home Directory: "+homeDir+"/.tp.toml", homeDir),
-						huh.NewOption("Project Root: "+cwd+"/.tp.toml", cwd),
+						huh.NewOption("Project Root:"+".tp.toml", cwd),
 					).Value(&cfgFile),
 
 				// It could make sense some day to do a `gh tp init --binary`
@@ -161,10 +141,7 @@ in the location selected. Order of lookups is:
 			os.Exit(1)
 		}
 
-		// conf := make(map[string]interface{})
-		conf := make(map[string]any)
-
-		conf[projectName] = configParams{
+		conf := ConfigParams{
 			Binary:   binary,
 			PlanFile: planFile,
 			MdFile:   mdFile,
@@ -175,11 +152,7 @@ in the location selected. Order of lookups is:
 		if err != nil {
 			log.Fatal(err)
 		}
-		// log.Infof("Project name is: %s", projectName)
-		// log.Infof("Binary is: %s", binary)
-		// log.Infof("Plan out file is: %s", planFile)
-		// log.Infof("Markdown file is: %s", mdFile)
-		// log.Infof("File saved in: %s", cfgFile)
+
 		if createFile {
 			err = os.WriteFile(cfgFile+"/.tp-test.toml", config, 0o644)
 			if err != nil {

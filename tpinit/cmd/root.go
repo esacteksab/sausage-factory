@@ -53,7 +53,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory and home config directory.
-		homeDir, configDir = getDirectories()
+		homeDir, configDir, _, _ = getDirectories()
 
 		// Search config in home directory with name ".gh-tp" (without extension).
 		viper.SetConfigName(".gh-tp.toml")
