@@ -1,6 +1,10 @@
 # GH Extension Things
 /gh-tf-pr
 /gh-tf-pr.exe
+/gh-tp-init
+/gh-tp-init.exe
+/main
+/main.exe
 
 # Go Things
 # If you prefer the allow list template instead of the deny list, see community template:
@@ -67,7 +71,6 @@ plan.out
 plan.txt
 plan.md
 
-
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
@@ -90,7 +93,6 @@ hugo.linux
 # Temporary lock file while building
 /.hugo_build.lock
 .hugo_build.lock
-
 
 ###############
 # Node Things #
