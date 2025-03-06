@@ -1,0 +1,31 @@
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+var (
+	cfgFile string
+	cwd     string
+	file    string
+)
+
+func main() {
+	getCWD()
+}
+
+func getCWD() (cwd string, err error) {
+	cwd, err = os.Getwd()
+	if err != nil {
+		fmt.Errorf("Error: %s", err)
+	}
+	file = ".tp-test.toml"
+	fmt.Printf("file is: %s\n", file)
+	fmt.Printf("early cwd is: %s\n", cwd)
+	cfgFile = cwd
+	fmt.Printf("late cwd is: %s\n", cwd)
+	fmt.Printf("cfgFile is: %s\n", cfgFile)
+	fmt.Printf("full path is: %s/%s\n", cfgFile, file)
+	return cwd, err
+}
