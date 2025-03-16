@@ -1,4 +1,4 @@
-package main
+package foo
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ var (
 	cfgFile string
 	cwd     string
 	file    string
+	foo     int
 )
 
 func main() {
