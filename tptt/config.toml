@@ -1,0 +1,11 @@
+['esacteksab/gh-tp']
+  binary = 'terraform'
+  mdFile = 'plan.md'
+  planFile = 'plan.out'
+  verbose = false
+
+['esacteksab/sausage-factory']
+  binary = 'tofu'
+  mdFile = 'tfplan.md'
+  planFile = 'tfplan.out'
+  verbose = true
