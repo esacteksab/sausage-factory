@@ -7,6 +7,9 @@ import (
 	"os"
 
 	"github.com/cli/go-gh/v2/pkg/repository"
+	ktoml "github.com/knadh/koanf/parsers/toml/v2"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -90,7 +93,17 @@ func main() {
 	}
 
 	fmt.Println("TOML file created successfully")
-	fmt.Println(data)
+	// fmt.Println(data)
+
+	cfg := ReadConfig("config.toml")
+
+	// fmt.Printf("%s binary is: %s", p2Name, cfg.String(p2Name+".binary"))
+	foo := cfg.String(p2Name)
+	fmt.Println(foo.binary)
+	//	for k, v := range foo {
+	//		fmt.Printf("Key: %v, Value: %v\n", k, v)
+	//
+	// }
 }
 
 // func MakeTemp() (date string, err error) {
@@ -149,3 +162,22 @@ func main() {
 // 	fmt.Println(encoder)
 // 	return encoder.Encode(config)
 // }
+
+func ReadConfig(path string) *koanf.Koanf {
+	var k = koanf.New(".")
+
+	if err := k.Load(file.Provider("./config.toml"), ktoml.Parser()); err != nil {
+		log.Fatalf("error loading config file: %v", err)
+	}
+	// if err := k.Load(file.Provider("./config.toml"), toml.Parser()); err != nil {
+	// 	log.Fatalf("error reading from config: %v", err)
+	// }
+
+	//fmt.Println("config.toml is ", k)
+	// fmt.Println(k.String("1.binary"))
+	// fmt.Println(k.String("2.binary"))
+	// for key, value := range k.All() {
+	// fmt.Printf("Key: %s, Value: %v\n", key, value)
+	// }
+	return k
+}
