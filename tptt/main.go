@@ -13,14 +13,21 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+// Config represents the config file
 type Config struct {
 	Projects map[string]Project `toml:"project"`
 }
 
+// A config file consists of one more Projects
 type Projects struct {
 	Project Project
 }
 
+// A Project has a:
+// Name: string, repo.Owner/repo.Name
+// Binary: string, expects Tofu or Terraform, only required if both binaries are in $PATH
+// PlanFile: string, required
+// MdFile: string, required
 type Project struct {
 	Name     string `toml:"-"`
 	Binary   string `toml:"binary"`
@@ -29,6 +36,7 @@ type Project struct {
 	Verbose  bool   `toml:"verbose"`
 }
 
+// tp has two core files, a plan output file and the markdown file
 type TPFile struct {
 	Name    string
 	Purpose string
@@ -42,26 +50,27 @@ var (
 )
 
 func main() {
-	// MakeTemp()
+	// We need a unique identifier, so we're using repo.Owner/repo.Name as the key
 	repo, err := repository.Current()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// A Project
 	projectName := "esacteksab/gh-tp"
 	binary = "terraform"
 	planFile = "plan.out"
 	mdFile = "plan.md"
 	verbose = false
 
+	// Another project
 	p2Name := repo.Owner + "/" + repo.Name
 	p2binary := "tofu"
 	p2planFile := "tfplan.out"
 	p2mdFile := "tfplan.md"
 	p2Verbose := true
 
-	fmt.Println(projectName)
-
+	// This is a map[string]interface{} representing the projects above
 	data := map[string]interface{}{
 		projectName: map[string]any{
 			"binary":   binary,
@@ -77,33 +86,28 @@ func main() {
 		},
 	}
 
-	b, _ := toml.Marshal(data)
-	fmt.Println("v2:\n" + string(b))
-
 	buf := bytes.Buffer{}
 	enc := toml.NewEncoder(&buf)
-	enc.SetIndentTables(true)
-	enc.Encode(data)
-	fmt.Println("v2 Encoder:\n" + buf.String())
 
-	err = os.WriteFile("config.toml", buf.Bytes(), 0644)
+	// I prefer indents in TOML for readability TOML doesn't give a shit.
+	enc.SetIndentTables(true)
+	err = enc.Encode(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// Create the file
+	err = os.WriteFile("config.toml", buf.Bytes(), 0o644)
 	if err != nil {
 		fmt.Printf("Error writing file: %v\n", err)
 		return
 	}
 
-	fmt.Println("TOML file created successfully")
-	// fmt.Println(data)
-
-	cfg := ReadConfig("config.toml")
-
-	// fmt.Printf("%s binary is: %s", p2Name, cfg.String(p2Name+".binary"))
-	foo := cfg.String(p2Name)
-	fmt.Println(foo.binary)
-	//	for k, v := range foo {
-	//		fmt.Printf("Key: %v, Value: %v\n", k, v)
-	//
-	// }
+	// This essentially reads the file created above
+	// The file was created with pellettier/toml/v2
+	// The file is read with knadh/koanf
+	GetProjectParameters(p2Name)
+	GetProjectParameters(projectName)
 }
 
 // func MakeTemp() (date string, err error) {
@@ -146,38 +150,44 @@ func main() {
 // 	return true, nil
 // }
 
-// func createConfigFile(config Config) error {
-//
-// 	filename := "config.toml"
-// 	f, err := os.Create(filename)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer f.Close()
-//
-// 	data, err := toml.Mar(f)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	fmt.Println(encoder)
-// 	return encoder.Encode(config)
-// }
-
-func ReadConfig(path string) *koanf.Koanf {
-	var k = koanf.New(".")
+// GetProjectParameters gets a project's parameters from the defined config file
+// More than one project may be defined in the config file
+func GetProjectParameters(project string) {
+	k := koanf.New(".")
 
 	if err := k.Load(file.Provider("./config.toml"), ktoml.Parser()); err != nil {
 		log.Fatalf("error loading config file: %v", err)
 	}
-	// if err := k.Load(file.Provider("./config.toml"), toml.Parser()); err != nil {
-	// 	log.Fatalf("error reading from config: %v", err)
-	// }
 
-	//fmt.Println("config.toml is ", k)
-	// fmt.Println(k.String("1.binary"))
-	// fmt.Println(k.String("2.binary"))
-	// for key, value := range k.All() {
-	// fmt.Printf("Key: %s, Value: %v\n", key, value)
-	// }
-	return k
+	// The config file may consist of any projects, we just want this project
+	config := k.Get(project)
+
+	// Type assert the interface{} config to map[string]any
+	fubar, ok := config.(map[string]any)
+	if !ok {
+		fmt.Println("interface is not a map")
+	}
+	binary, ok := fubar["binary"].(string)
+	if !ok {
+		fmt.Println("Something wrong binary: ", binary)
+	}
+	planFile, ok := fubar["planFile"].(string)
+	if !ok {
+		fmt.Println("something wrong with planFile: ", planFile)
+	}
+	mdFile, ok := fubar["mdFile"].(string)
+	if !ok {
+		fmt.Println("something wrong with mdFile: ", mdFile)
+	}
+	verbose, ok := fubar["verbose"].(bool)
+	if !ok {
+		fmt.Println("something wrong with verbose: ", verbose)
+	}
+
+	fmt.Println("\n========================")
+	fmt.Println(project)
+	fmt.Println(binary)
+	fmt.Println(planFile)
+	fmt.Println(mdFile)
+	fmt.Println(verbose)
 }
