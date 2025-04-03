@@ -11,8 +11,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Get PR type
         run: |
+          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
           TYPE="echo ${{ github.event.pull_request.title }} | cut -d':' -f1"
-          gh pr edit --add-label "type: ${TYPE}"
+          gh pr edit ${{ github.event.pull_request.number}} --add-label "type: ${TYPE}"
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #OWNER: ${{ github.event.repository.owner }}
+          #REPO: ${{ github.event.repository.name }}
