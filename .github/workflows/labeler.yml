@@ -17,5 +17,3 @@ jobs:
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OWNER: ${{ github.event.repository.owner }}
-          REPO: ${{ github.event.repository.name }}
