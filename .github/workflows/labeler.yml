@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Get PR type
         run: |
-          TYPE="$(gh pr list --json title -q '.[0].title' |cut -d':' -f1)
+          TYPE="$(gh pr list --json title -q '.[0].title' |cut -d':' -f1)"
           echo ${TYPE}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
