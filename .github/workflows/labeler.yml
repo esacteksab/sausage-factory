@@ -12,7 +12,7 @@ jobs:
       - name: Get PR type
         run: |
           gh auth setup-git
-          TYPE="echo ${{ github.event.pull_request.title }} | cut -d':' -f1"
+          TYPE="$(echo ${{ github.event.pull_request.title }} | cut -d':' -f1)"
           gh pr edit ${{ github.event.pull_request.number}} --add-label "type: ${TYPE}"
         shell: bash
         env:
