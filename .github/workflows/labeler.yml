@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Get PR type
         run: |
-          echo "${{ github.event.pull_request.title }}" | cut -d':' -f1'
+          echo "${{ github.event.pull_request.title }}" | cut -d':' -f1
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
