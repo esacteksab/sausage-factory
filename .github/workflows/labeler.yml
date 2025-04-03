@@ -9,7 +9,8 @@ jobs:
     steps:
       - name: Get PR type
         run: |
-          echo "${{ github.event.pull_request.title }}" | cut -d':' -f1
+          TYPE="echo ${{ github.event.pull_request.title }}" | cut -d':' -f1"
+          gh pr edit --add-label "type: ${TYPE}"
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
