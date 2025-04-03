@@ -1,0 +1,16 @@
+name: Labeler
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  labeler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR type
+        run: |
+          TYPE="$(gh pr list --json title -q '.[0].title' |cut -d':' -f1)
+          echo ${TYPE}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
