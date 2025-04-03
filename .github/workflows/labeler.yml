@@ -2,7 +2,6 @@ name: Labeler
 
 on:
   pull_request:
-    types: [opened]
 
 jobs:
   labeler:
@@ -10,7 +9,6 @@ jobs:
     steps:
       - name: Get PR type
         run: |
-          TYPE="$(gh pr list --json title -q '.[0].title' |cut -d':' -f1)"
-          echo ${TYPE}
+          echo ${{ github.event.pull_request.title }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
