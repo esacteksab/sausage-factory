@@ -1,7 +1,7 @@
 package main
 
 // Play with this
-// Google's AI repsonse to query: 'handling ctrl+ with cobra golang'
+// Google's AI response to query: 'handling ctrl+ with cobra golang'
 
 // To handle Ctrl+C events gracefully in a Cobra-based Go application, one can
 // utilize Go's os/signal package. This involves setting up a channel to listen

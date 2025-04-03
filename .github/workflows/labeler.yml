@@ -1,0 +1,23 @@
+name: Labeler
+
+on:
+  pull_request:
+    types:
+      - opened
+
+jobs:
+  labeler:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+      - name: Get PR type and add label
+        run: |
+          gh auth setup-git
+          TYPE="$(echo ${{ github.event.pull_request.title }} | cut -d':' -f1)"
+          gh pr edit ${{ github.event.pull_request.number}} --add-label "type: ${TYPE}"
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
