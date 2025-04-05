@@ -3,5 +3,5 @@
   files = ['.editorconfig', '.gitignore', 'package.json', '.prettierrc']
 
 ['esacteksab/.github']
-  path  = '/home/bmorriso/projects/esacteksab-github'
+  path  = '/home/bmorriso/local-repo/projects/esacteksab-github'
   files = ['.github/workflows/spelling.yml', '.github/workflows/pre-commit.yml']
