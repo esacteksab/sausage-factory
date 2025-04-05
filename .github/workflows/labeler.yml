@@ -2,8 +2,6 @@ name: Labeler
 
 on:
   pull_request:
-    types:
-      - opened
 
 jobs:
   labeler:
@@ -16,8 +14,20 @@ jobs:
       - name: Get PR type and add label
         run: |
           gh auth setup-git
-          TYPE="$(echo ${{ github.event.pull_request.title }} | cut -d':' -f1)"
-          gh pr edit ${{ github.event.pull_request.number}} --add-label "type: ${TYPE}"
+          PRTITLE="${{ github.event.pull_request.title }}"
+          REGEX="\(([^)]+)\)"
+          if [[ ${PRTITLE} =~ ${REGEX} ]]; then
+            SCOPE="${BASH_REMATCH[1]}"
+            TYPE="$(echo ${PRTITLE} | cut -d'(' -f1)"
+          else
+            TYPE="$(echo "${PRTITLE}" | cut -d':' -f1)"
+          fi
+
+          if [[ ${SCOPE} == "deps" ]]; then
+            gh pr edit 5 --add-label "type: ${TYPE},type: dependencies"
+          else
+            gh pr edit 5 --add-label "type: ${TYPE}"
+          fi
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
