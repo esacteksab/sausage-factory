@@ -1,13 +1,13 @@
-verbose = true
+verbose = false
 
 ['esacteksab/go-project-template']
-  path  = '/home/bmorriso/local-repo/projects/projectTemplates/go-project-template'
+  path  = '/home/bdmorrison/local-repo/projectTemplates/go-project-template'
   files = ['.editorconfig', '.gitignore', 'package.json', '.prettierrc']
 
-['esacteksab/.github']
-  path  = '/home/bmorriso/local-repo/projects/esacteksab-github'
-  files = ['.github/workflows/spelling.yml', '.github/workflows/pre-commit.yml']
+# ['esacteksab/.github']
+#   path  = '/home/bdmorrison/local-repo/esacteksab-github'
+#  files = ['.github/workflows/spelling.yml', '.github/workflows/pre-commit.yml']
 
 ['esacteksab/gh-tp']
-  path  = '/home/bmorriso/local-repo/projects/tp/gh-tp'
+  path  = '/home/bdmorrison/local-repo/gh-tp'
   files = ['.github/workflows/test.yml']

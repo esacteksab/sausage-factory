@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -21,7 +22,7 @@ func CopyFile(sourcePath string, files []string) {
 	for _, file := range files {
 		logger.Debugf("Copying file from %s: %s", sourcePath, file)
 		sourcePath := sourcePath + "/" + file
-		logger.Debugf(sourcePath)
+		logger.Debug(sourcePath)
 		// Open the source file for reading
 		sourceFile, err := os.Open(sourcePath)
 		if err != nil {
@@ -40,7 +41,7 @@ func CopyFile(sourcePath string, files []string) {
 			}
 		}
 
-		// Checking to ensure sourc exists
+		// Checking to ensure source exists
 		if DoesExist(sourcePath) {
 			// If the file doesn't exist locally
 			if !DoesExist(file) {
@@ -66,26 +67,31 @@ func CopyFile(sourcePath string, files []string) {
 				logger.Debug("Are we in here?")
 				logger.Infof("Error: %s", err)
 			}
-			// If they're not th esame, we say as much and copy from source
+			// If they're not the same, we say as much and copy from source
 			if !same {
-				logger.Infof("❌ %s isn't the same, copying...", file)
-				// Presumably we are copying to the current directory, so this is `file`
-				destinationFile, err := os.Create(file)
+				logger.Infof("❌ %s isn't the same...", file)
+				diff, err := DiffFile(sourcePath, file)
 				if err != nil {
-					logger.Debug("Are we here?")
-					logger.Error("Error", "error", err.Error())
+					logger.Errorf("%v", err)
 				}
-				defer destinationFile.Close()
-
-				// Copy the contents of the source file to the destination file
-				_, err = io.Copy(destinationFile, sourceFile)
-				if err != nil {
-					logger.Error("Error", "error", err.Error())
-				}
-				logger.Infof("✅ Copied file: %s...", file)
+				fmt.Print(diff + "\n")
+				// 				// Presumably we are copying to the current directory, so this is `file`
+				// 				destinationFile, err := os.Create(file)
+				// 				if err != nil {
+				// 					logger.Debug("Are we here?")
+				// 					logger.Error("Error", "error", err.Error())
+				// 				}
+				// 				defer destinationFile.Close()
+				//
+				// 				// Copy the contents of the source file to the destination file
+				// 				_, err = io.Copy(destinationFile, sourceFile)
+				// 				if err != nil {
+				// 					logger.Error("Error", "error", err.Error())
+				// 				}
+				// 				logger.Infof("✅ Copied file: %s...", file)
 			}
 			// The file existed and had no drift
-			logger.Infof("✨ %s file exists...", file)
+			//logger.Infof("✨ %s file exists...", file)
 		}
 	}
 }
@@ -126,17 +132,17 @@ func SameFile(source, dest string) (bool, error) {
 
 func DiffFile(source, dest string) (string, error) {
 	// Read the contents of the files
-	content1, err := os.ReadFile(source)
+	src, err := os.ReadFile(source)
 	if err != nil {
 		logger.Fatal("Error", "error", err.Error())
 	}
-	content2, err := os.ReadFile(dest)
+	dst, err := os.ReadFile(dest)
 	if err != nil {
 		logger.Fatal("Error", "error", err.Error())
 	}
 
 	// Compute the diff between the two files
-	diffs := diff.Diff(string(content1), content1, string(content2), content2)
+	diffs := diff.Diff(string(dst), dst, string(src), src)
 
 	// Format the diff output
 	var buf bytes.Buffer
@@ -145,11 +151,13 @@ func DiffFile(source, dest string) (string, error) {
 	}
 
 	// Define styles
-	addStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("10"))   // Green
-	removeStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("9")) // Red
+	//addStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("10"))   // Green
+	//removeStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("9")) // Red
+	addStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))   // Green
+	removeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9")) // Red
 
 	var filteredLines []string
-	lines := strings.Split(buf.String(), "")
+	lines := strings.Split(buf.String(), "\n")
 
 	for _, line := range lines {
 		if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") {
@@ -159,7 +167,8 @@ func DiffFile(source, dest string) (string, error) {
 		}
 	}
 
-	logger.Debug(strings.Join(filteredLines, ""))
+	// fmt.Print(strings.Join(filteredLines, "\n"))
+	// fmt.Print()
 	// return buf.String(), nil
-	return strings.Join(filteredLines, ""), nil
+	return strings.Join(filteredLines, "\n"), nil
 }
