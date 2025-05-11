@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package config
 
 import (
@@ -34,10 +35,10 @@ func LoadFromFile(path string) (Config, error) {
 		return Config{}, err
 	}
 	err := k.Load(env.Provider("AA_", ".", func(s string) string {
-		return strings.Replace(strings.ToLower(strings.TrimPrefix(s, "AA_")), "_", ".", -1)
+		return strings.ReplaceAll(strings.ToLower(strings.TrimPrefix(s, "AA_")), "_", ".")
 	}), nil)
 	if err != nil {
-		fmt.Errorf("Error", err)
+		return Config{}, fmt.Errorf("error: %v", err)
 	}
 
 	verbose := k.Bool("verbose")

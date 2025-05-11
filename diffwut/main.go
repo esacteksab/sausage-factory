@@ -1,22 +1,16 @@
-// SPDX-License-Identifier: MIT
-package internal
+package main
 
 import (
 	"bufio"
 	"bytes"
-	"crypto/sha256"
-	"errors"
 	"fmt"
-	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 	"github.com/rogpeppe/go-internal/diff"
-
-	"github.com/esacteksab/annoyed-aardvark/internal/logger"
 )
 
 const (
@@ -33,203 +27,78 @@ type CustomSection struct {
 	MarkerStop  string
 }
 
-// CopyFile will copy files from the source path to the destination path.
-func CopyFile(sourcePath string, files []string) {
-	for _, file := range files {
-		logger.Debugf("Copying file from %s: %s", sourcePath, file)
-		sourcePathFile := sourcePath + "/" + file
-		logger.Debug(sourcePathFile)
-		// Open the source file for reading
-		sourceFile, err := os.Open(sourcePathFile)
-		if err != nil {
-			logger.Debug("I'm dying here Jim!")
-			logger.Fatal("Error", "error", err.Error())
+func main() {
+	sourcePath := "../../projectTemplates/go-project-template/Makefile"
+	destPath := "../aa/Makefile"
+	fmt.Printf("Scanning file: %s\n", destPath)
+
+	// Debug scan to find all relevant lines
+	debugScanFile(destPath)
+
+	// Find the custom sections
+	sections, err := findCustomSections(destPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Check if we found any sections
+	if len(sections) == 0 {
+		fmt.Println("No custom sections found")
+		return
+	}
+
+	// Print information about each section
+	for i, section := range sections {
+		fmt.Printf("Section %d:\n", i+1)
+		fmt.Printf("  Start line: %d\n", section.StartLine)
+		fmt.Printf("  End line: %d\n", section.EndLine)
+		fmt.Printf("  Start marker: '%s'\n", section.MarkerStart)
+		fmt.Printf("  Stop marker: '%s'\n", section.MarkerStop)
+		fmt.Printf("  Content (%d lines):\n", len(section.Content))
+		for _, line := range section.Content {
+			fmt.Printf("    %s\n", line)
 		}
-		defer sourceFile.Close()
+		fmt.Println()
+	}
 
-		// We need to create the destination directory if it doesn't exist
-		destPathDir := filepath.Dir(file)
-
-		// If it doesn't exist, create it
-		if !DoesExist(destPathDir) {
-			if err := os.MkdirAll(destPathDir, 0o750); err != nil { //nolint:mnd
-				logger.Fatal("Error", "error", err.Error())
-			}
-		}
-
-		// Checking to ensure source exists
-		if DoesExist(sourcePathFile) {
-			// If the file doesn't exist locally
-			if !DoesExist(file) {
-				// Presumably we are copying to the current directory, so this is `file`
-				destinationFile, err := os.Create(file)
-				if err != nil {
-					logger.Debug("Are we here?")
-					logger.Fatal("Error", "error", err.Error())
-				}
-				defer destinationFile.Close()
-
-				// Copy the contents of the source file to the destination file
-				logger.Infof("❌ %s does not exist, copying...", file)
-				_, err = io.Copy(destinationFile, sourceFile)
-				if err != nil {
-					logger.Error("Error", "error", err.Error())
-				}
-				logger.Infof("⭐ Created file: %s...", file)
-			} else {
-				// If the file does exist locally, we check for custom sections
-				sections, err := findCustomSections(file)
-				if err != nil {
-					logger.Errorf("Error finding custom sections: %v", err)
-				}
-
-				if len(sections) > 0 {
-					logger.Infof("🔍 Found %d custom sections in %s", len(sections), file)
-
-					// Use smart merge to preserve custom sections
-					err = SyncFiles(sourcePathFile, file, false)
-					if err != nil {
-						logger.Errorf("Error syncing files: %v", err)
-					}
-				} else {
-					// No custom sections, check if files are identical
-					same, err := SameFile(sourcePathFile, file)
-					if err != nil {
-						logger.Debugf("Error comparing files: %v", err)
-					}
-
-					// If they're not the same, show diff
-					if !same {
-						logger.Infof("❌ %s isn't the same...", file)
-						diff, err := DiffFile(sourcePathFile, file)
-						if err != nil {
-							logger.Errorf("%v", err)
-						}
-						fmt.Print(diff + "\n")
-
-						// Ask if user wants to overwrite
-						logger.Info("Would you like to overwrite the local file? (y/N): ")
-						var response string
-						fmt.Scanln(&response)
-
-						if strings.ToLower(response) == "y" || strings.ToLower(response) == "yes" {
-							// Copy the source file over the destination
-							destFile, err := os.Create(file)
-							if err != nil {
-								logger.Error("Error creating destination file", "error", err.Error())
-								continue
-							}
-
-							// Reopen source file as we might have closed it
-							srcFile, err := os.Open(sourcePathFile)
-							if err != nil {
-								logger.Error("Error opening source file", "error", err.Error())
-								destFile.Close()
-								continue
-							}
-
-							_, err = io.Copy(destFile, srcFile)
-							srcFile.Close()
-							destFile.Close()
-
-							if err != nil {
-								logger.Error("Error copying file", "error", err.Error())
-							} else {
-								logger.Infof("✅ Copied file: %s...", file)
-							}
-						} else {
-							logger.Info("Skipping file")
-						}
-					} else {
-						logger.Infof("✨ %s file is identical, no changes needed", file)
-					}
-				}
-			}
-		}
+	// Then sync the files
+	err = SyncFiles(sourcePath, destPath, true) // true for dry-run
+	if err != nil {
+		log.Fatal("Error syncing files:", err)
 	}
 }
 
-func DoesExist(path string) bool {
-	// Check if the file or directory exists
-	_, err := os.Stat(path)
-	return !errors.Is(err, fs.ErrNotExist)
-}
-
-func SameFile(source, dest string) (bool, error) {
-	// Get info about both files
-	safeSource := filepath.Clean(source)
-	f1, err := os.Open(safeSource)
+// debugScanFile prints any lines containing our marker prefix for debugging
+func debugScanFile(destPath string) error {
+	file, err := os.Open(filepath.Clean(destPath))
 	if err != nil {
-		return false, err
+		return err
 	}
-	defer f1.Close()
+	defer file.Close()
 
-	h1 := sha256.New()
-	if _, err := io.Copy(h1, f1); err != nil {
-		return false, err
-	}
+	scanner := bufio.NewScanner(file)
+	lineNum := 0
 
-	safeDest := filepath.Clean(dest)
-	f2, err := os.Open(safeDest)
-	if err != nil {
-		return false, err
-	}
-	defer f2.Close()
+	fmt.Println("=== Debug: Marker Lines ===")
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineNum++
 
-	h2 := sha256.New()
-	if _, err := io.Copy(h2, f2); err != nil {
-		return false, err
-	}
-
-	// Compare the hashes
-	return bytes.Equal(h1.Sum(nil), h2.Sum(nil)), nil
-}
-
-func DiffFile(source, dest string) (string, error) {
-	// Read the contents of the files
-	safeSource := filepath.Clean(source)
-	src, err := os.ReadFile(safeSource)
-	if err != nil {
-		logger.Fatal("Error", "error", err.Error())
-	}
-	safeDest := filepath.Clean(dest)
-	dst, err := os.ReadFile(safeDest)
-	if err != nil {
-		logger.Fatal("Error", "error", err.Error())
-	}
-
-	// Compute the diff between the two files
-	diffs := diff.Diff(string(dst), dst, string(src), src)
-
-	// Format the diff output
-	var buf bytes.Buffer
-	for _, diff := range diffs {
-		buf.WriteString(string(diff))
-	}
-
-	// Define styles
-	addStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))   // Green
-	removeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9")) // Red
-
-	var filteredLines []string
-	lines := strings.Split(buf.String(), "\n")
-
-	for _, line := range lines {
-		if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") {
-			filteredLines = append(filteredLines, addStyle.Render(line))
-		} else if strings.HasPrefix(line, "-") && !strings.HasPrefix(line, "---") {
-			filteredLines = append(filteredLines, removeStyle.Render(line))
+		if strings.TrimSpace(line) == markerStart ||
+			strings.TrimSpace(line) == markerStop ||
+			strings.Contains(line, "# annoyed-aardvark") {
+			fmt.Printf("Line %d: '%s'\n", lineNum, line)
 		}
 	}
+	fmt.Println("=========================")
 
-	return strings.Join(filteredLines, "\n"), nil
+	return scanner.Err()
 }
 
-// findCustomSections identifies the protected sections in a file
-func findCustomSections(filePath string) ([]CustomSection, error) {
+func findCustomSections(destPath string) ([]CustomSection, error) {
 	sections := []CustomSection{}
 
-	file, err := os.Open(filepath.Clean(filePath))
+	file, err := os.Open(filepath.Clean(destPath))
 	if err != nil {
 		return nil, err
 	}
@@ -299,26 +168,26 @@ func SyncFiles(sourcePath, destPath string, dryRun bool) error {
 	// Compare current destination with merged result
 	diffs := diff.Diff(string(destBytes), destBytes, string(mergedBytes), mergedBytes)
 	if len(diffs) == 0 {
-		logger.Info("Files are already in sync.")
+		fmt.Println("Files are already in sync.")
 		return nil
 	}
 
 	// Format the diff output
 	var buf bytes.Buffer
 	for _, diffChunk := range diffs {
-		buf.WriteString(string(diffChunk))
+		buf.WriteString(string(diffChunk)) // Changed from buf.Write(diffChunk)
 	}
 	diffStr := formatDiffOutput(buf.String())
 
-	logger.Info("Changes to be applied:")
+	fmt.Println("Changes to be applied:")
 	fmt.Println(diffStr)
 
 	if dryRun {
-		logger.Info("Dry run - no changes made.")
+		fmt.Println("Dry run - no changes made.")
 		return nil
 	}
 
-	// Confirm changes if not already confirmed
+	// Confirm changes
 	fmt.Print("Apply these changes? [y/N]: ")
 	reader := bufio.NewReader(os.Stdin)
 	response, _ := reader.ReadString('\n')
@@ -326,11 +195,10 @@ func SyncFiles(sourcePath, destPath string, dryRun bool) error {
 
 	if response == "y" || response == "yes" {
 		// Write the merged content back to destination
-		logger.Infof("✅ Updating file: %s...", destPath)
-		return os.WriteFile(destPath, mergedBytes, 0o640) //nolint:gosec,mnd
+		return os.WriteFile(destPath, mergedBytes, 0644)
 	}
 
-	logger.Info("Operation cancelled.")
+	fmt.Println("Operation cancelled.")
 	return nil
 }
 

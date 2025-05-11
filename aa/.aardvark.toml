@@ -2,7 +2,7 @@ verbose = false
 
 ['esacteksab/go-project-template']
   path  = '/home/bdmorrison/local-repo/projectTemplates/go-project-template'
-  files = ['.editorconfig', '.gitignore', 'package.json', '.prettierrc']
+  files = ['.editorconfig', '.gitignore', 'package.json', '.prettierrc', 'Makefile', '.golangci.yaml', '.tool-versions']
 
 # ['esacteksab/.github']
 #   path  = '/home/bdmorrison/local-repo/esacteksab-github'
