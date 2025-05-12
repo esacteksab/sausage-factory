@@ -1,8 +1,8 @@
-verbose = false
+verbose = true
 
 ['esacteksab/go-project-template']
   path  = '/home/bdmorrison/local-repo/projectTemplates/go-project-template'
-  files = ['.editorconfig', '.gitignore', 'package.json', '.prettierrc', 'Makefile', '.golangci.yaml', '.tool-versions']
+  files = ['.editorconfig', '.gitignore', '.golangci.yaml', 'package.json', '.prettierrc', 'Makefile', '.tool-versions']
 
 # ['esacteksab/.github']
 #   path  = '/home/bdmorrison/local-repo/esacteksab-github'

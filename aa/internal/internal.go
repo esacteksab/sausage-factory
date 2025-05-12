@@ -14,6 +14,8 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/hexops/gotextdiff"
+	"github.com/hexops/gotextdiff/myers"
 	"github.com/rogpeppe/go-internal/diff"
 
 	"github.com/esacteksab/annoyed-aardvark/internal/logger"
@@ -273,7 +275,6 @@ func findCustomSections(filePath string) ([]CustomSection, error) {
 	return sections, nil
 }
 
-// SyncFiles synchronizes source file to destination, preserving custom sections
 func SyncFiles(sourcePath, destPath string, dryRun bool) error {
 	// Find custom sections in destination file
 	sections, err := findCustomSections(destPath)
@@ -281,8 +282,8 @@ func SyncFiles(sourcePath, destPath string, dryRun bool) error {
 		return fmt.Errorf("finding custom sections: %w", err)
 	}
 
-	// Read destination file as bytes for diffing
-	destBytes, err := os.ReadFile(destPath)
+	// Read destination file content
+	destContent, err := os.ReadFile(destPath)
 	if err != nil {
 		return fmt.Errorf("reading destination file: %w", err)
 	}
@@ -293,22 +294,26 @@ func SyncFiles(sourcePath, destPath string, dryRun bool) error {
 		return fmt.Errorf("merging files: %w", err)
 	}
 
-	// Convert merged content to bytes for diffing
-	mergedBytes := []byte(mergedContent)
+	// Convert content to strings for diffing
+	destContentStr := string(destContent)
+	mergedContentStr := mergedContent
 
-	// Compare current destination with merged result
-	diffs := diff.Diff(string(destBytes), destBytes, string(mergedBytes), mergedBytes)
-	if len(diffs) == 0 {
+	// Compute edits and diff
+	edits := myers.ComputeEdits("", destContentStr, mergedContentStr)
+	unifiedDiff := gotextdiff.ToUnified(sourcePath, destPath, destContentStr, edits)
+
+	// Capture the string representation
+	var buf bytes.Buffer
+	fmt.Fprint(&buf, unifiedDiff)
+
+	// Format the output and print
+	diffStr := formatDiffOutput(buf.String())
+
+	// Check if there are actual changes
+	if len(edits) == 0 {
 		logger.Info("Files are already in sync.")
 		return nil
 	}
-
-	// Format the diff output
-	var buf bytes.Buffer
-	for _, diffChunk := range diffs {
-		buf.WriteString(string(diffChunk))
-	}
-	diffStr := formatDiffOutput(buf.String())
 
 	logger.Info("Changes to be applied:")
 	fmt.Println(diffStr)
@@ -327,7 +332,7 @@ func SyncFiles(sourcePath, destPath string, dryRun bool) error {
 	if response == "y" || response == "yes" {
 		// Write the merged content back to destination
 		logger.Infof("✅ Updating file: %s...", destPath)
-		return os.WriteFile(destPath, mergedBytes, 0o640) //nolint:gosec,mnd
+		return os.WriteFile(destPath, []byte(mergedContent), 0o640)
 	}
 
 	logger.Info("Operation cancelled.")
@@ -340,18 +345,23 @@ func formatDiffOutput(diffText string) string {
 	addStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))   // Green
 	removeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9")) // Red
 
-	var filteredLines []string
+	var formattedLines []string
 	lines := strings.Split(diffText, "\n")
 
 	for _, line := range lines {
-		if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") {
-			filteredLines = append(filteredLines, addStyle.Render(line))
-		} else if strings.HasPrefix(line, "-") && !strings.HasPrefix(line, "---") {
-			filteredLines = append(filteredLines, removeStyle.Render(line))
+		if strings.HasPrefix(line, "+") || strings.HasPrefix(line, "+++") {
+			// Added lines
+			formattedLines = append(formattedLines, addStyle.Render(line))
+		} else if strings.HasPrefix(line, "-") || strings.HasPrefix(line, "---") {
+			// Removed lines
+			formattedLines = append(formattedLines, removeStyle.Render(line))
+		} else {
+			// Header lines and context lines - keep them as is
+			formattedLines = append(formattedLines, line)
 		}
 	}
 
-	return strings.Join(filteredLines, "\n")
+	return strings.Join(formattedLines, "\n")
 }
 
 // mergeFiles creates a merged version of source preserving provided custom sections

@@ -68,9 +68,6 @@ install: build
 
 	-gh aa --version
 
-# annoyed-aardvark stop
-
-# annoyed-aardvark start
 .PHONY: moreclean
 moreclean: clean
 
