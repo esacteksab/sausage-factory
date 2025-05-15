@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tailwind Layout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .menu-open #mobile-nav {
+      display: flex;
+    }
+    .menu-open .hamburger {
+      position: fixed;
+      z-index: 30;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col flex-wrap mx-0 md:mx-16 text-sm md:text-base" id="body">
+  <button onclick="document.getElementById('body').classList.toggle('menu-open')" class="hamburger md:hidden fixed top-4 right-4 z-20 p-2 bg-orange-600 text-white rounded">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+
+  <div class="flex flex-row flex-1 border-l-2 border-b-2 border-orange-600">
+    <main class="bg-gray-100 p-5 flex flex-col flex-auto">
+      <h2 class="text-xl pb-2 font-semibold">DevOpsinator: Accelerating Your Digital Transformation</h2>
+      <p class="ml-2">DevOpsinator delivers clean, manageable infrastructure
+      solutions that cut through complexity. We design straightforward, easily
+      maintained cloud architectures using modern Infrastructure as Code (Iac)
+      tools like Terraform, Packer, Ansible and many others, ensuring your
+      technology stack remains simple, scalable, and sustainable. Our approach
+      transforms intricate technical challenges into streamlined, low-overhead
+      systems that your team can confidently maintain.</p> <h3 class="text-lg
+      pt-2 font-semibold">Our Approach</h3>
+      <ul class="py-2 px-4">
+        <li>Minimalist infrastructure design</li>
+        <li>Easy-to-understand cloud architectures</li>
+        <li>Automated deployment and scaling</li>
+        <li>Reduced operational complexity</li>
+        <li>Continuous integration and delivery excellence</li>
+        <li>Cloud-native architecture optimization</li>
+        <li>Sustainable, low-maintenance solutions</li>
+      </ul>
+      <p class="pl-2">DevOpsinator: Making DevOps Simple, Powerful, Reliable, Resilient and Predictable.</p>
+      <br />
+      <h2 class="text-xl pb-2 font-semibold">Infrastructure Architect: Simplifying Complex Technology Landscapes</h2>
+      <p>With nearly 25 years of transformative IT experience, I specialize in
+      turning technical chaos into streamlined, sustainable infrastructure. From
+      rural non-profits to global enterprises, my journey spans on-premises data
+      centers to cloud ecosystems, with a deep expertise in AWS and
+      Infrastructure as Code.</p>
+      <h3 class="text-lg pt-2 font-semibold">Technical Evolution.</h3>
+      <ul class="py-2 px-4">
+        <li>Started in IT Help Desk and Windows Administration</li>
+        <li>Managed 1.5PB of storage and Active Directory environments</li>
+        <li>Transitioned to Linux systems and pioneering DevOps practices</li>
+        <li>Expert in Terraform, Ansible, and AWS infrastructure design</li>
+      </ul>
+
+      <h3 class="text-lg pt-2 font-semibold">Signature Approach</h3>
+        <p>I excel at entering organizations experiencing rapid growth,
+        establishing robust technological foundations that scale elegantly.
+        Specializing in infrastructures that are simple to manage, yet powerful
+        enough to support global operations. My toolkit includes AWS, Terraform,
+        Packer, Docker, ECS, Fargate, Kubernetes, and Nomad—always focused on
+        creating clear, maintainable solutions.</p>
+        <p>Transforming complex
+        infrastructures into streamlined, resilient systems: that's my core
+        expertise.<p>
+    </main>
+
+    <!-- Desktop nav -->
+    <nav id="mobile-nav" class="hidden md:flex bg-gray-100 text-gray-900 pt-5 px-5 pb-2 flex-col border-l-2 border-r-2 border-orange-600 w-full md:w-3/4 lg:max-w-80 fixed md:static inset-0 z-10 items-center">
+      <div class="logo mb-5 items-center">
+        <img src="sticker.png" alt="Logo" class="max-w-full h-auto w-32 md:w-auto">
+      </div>
+      <div class="nav-bar flex flex-col justify-center items-center border-t-2 border-b-2 border-orange-600">
+        <ul class="py-2">
+          <li class="hover:border hover:border-orange-600 px-3 py-2"><a href="#" class="text-gray-760 block">Home</a></li>
+          <li class="hover:border hover:border-orange-600 px-3 py-2"><a href="#" class="text-gray-700 block">About</a></li>
+          <li class="hover:border hover:border-orange-600 px-3 py-2"><a href="#" class="text-gray-700 block">Services</a></li>
+          <li class="hover:border hover:border-orange-600 px-3 py-2"><a href="#" class="text-gray-700 block">Contact</a></li>
+        </ul>
+      </div>
+      <div class="mt-auto nav-bar-bottom flex flex-col justify-center md:items-center md:border-t-2 md:border-orange-600 text-sm">
+        <ul class="pt-4">
+          <li><a href="#" class="text-gray-700 hover:underline flex items-center"><img src="octocat-1.png" alt="GitHub" class="w-6 h-auto mr-2">GitHub</a></li>
+          <li class="text-xs">&copy; 2025 DevOpsinator LLC</li>
+          <li class="text-xs">Made with 🧡 in the MidWest</li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+  <footer class="mt-auto m-0 p-0 flex flex-row items-center text-center justify-center">
+  </footer>
+</body>
+</html>
